@@ -10,7 +10,7 @@
     </linearGradient>
     <linearGradient id="chart" x1="574" y1="230" x2="926" y2="326" gradientUnits="userSpaceOnUse">
       <stop stop-color="#668DFF" stop-opacity=".08"/>
-      <stop offset="1" stop-color="#668DFF" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#668DFF" stop-opacity=".16"/>
     </linearGradient>
     <filter id="shadow" x="450" y="72" width="536" height="438" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
@@ -23,7 +23,7 @@
       <feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
     </filter>
     <clipPath id="chartClip">
-      <rect x="570" y="220" width="354" height="116" rx="8"/>
+      <rect x="534" y="350" width="368" height="68" rx="4"/>
     </clipPath>
   </defs>
 
@@ -39,18 +39,18 @@
     <path d="M386 78V486"/>
   </g>
 
-  <g transform="translate(72 104)">
+  <g transform="translate(88 104)">
     <rect width="42" height="42" rx="12" fill="url(#accent)"/>
     <path d="M11 29V13h4l6 8 6-8h4v16h-4V19l-6 8-6-8v10h-4Z" fill="#fff"/>
     <text x="56" y="28" fill="#F4F7FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="650" letter-spacing=".2">MC PANELS</text>
   </g>
 
-  <text x="72" y="226" fill="#F4F7FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="48" font-weight="700" letter-spacing="-1.6">Your server.</text>
-  <text x="72" y="282" fill="#F4F7FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="48" font-weight="700" letter-spacing="-1.6">At a glance.</text>
-  <text x="74" y="323" fill="#AAB6CC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="400">A clear, customizable dashboard for</text>
-  <text x="74" y="349" fill="#AAB6CC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="400">Minecraft servers in Pterodactyl.</text>
+  <text x="88" y="226" fill="#F4F7FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="48" font-weight="700" letter-spacing="-1.6">Your server.</text>
+  <text x="88" y="282" fill="#F4F7FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="48" font-weight="700" letter-spacing="-1.6">At a glance.</text>
+  <text x="90" y="323" fill="#AAB6CC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="400">A clear, customizable dashboard for</text>
+  <text x="90" y="349" fill="#AAB6CC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="400">Minecraft servers in Pterodactyl.</text>
 
-  <g transform="translate(74 391)">
+  <g transform="translate(90 391)">
     <rect width="48" height="48" rx="13" fill="#172235" stroke="#293750"/>
     <path d="M13 26h4l3-9 5 15 4-10h6" stroke="#83A9FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
     <rect x="60" width="48" height="48" rx="13" fill="#172235" stroke="#293750"/>
@@ -60,7 +60,7 @@
     <path d="M133 17h22M133 24h22M133 31h15" stroke="#73D6BD" stroke-width="2" stroke-linecap="round"/>
   </g>
 
-  <g transform="translate(74 466)">
+  <g transform="translate(90 466)">
     <circle cx="5" cy="5" r="5" fill="#55D6A2"/>
     <text x="19" y="9" fill="#C7D3E5" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="550" letter-spacing=".6">METRICS · PLAYER INSIGHTS · LAYOUTS</text>
   </g>
@@ -85,7 +85,7 @@
       <rect x="518" y="228" width="126" height="76" rx="10" fill="#171F30" stroke="#26334A"/>
       <text x="532" y="249" fill="#8A9BB5" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="10">CPU</text>
       <text x="532" y="278" fill="#F2F5FC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="23" font-weight="650">42%</text>
-      <path d="M594 284c9-14 13-10 19-19 5-7 9 1 15-12" stroke="#7DA0FF" stroke-width="2" stroke-linecap="round"/>
+      <path d="M594 281C602 279 605 286 612 278S622 276 628 264" stroke="#7DA0FF" stroke-width="2" stroke-linecap="round"/>
       <rect x="654" y="228" width="126" height="76" rx="10" fill="#171F30" stroke="#26334A"/>
       <text x="668" y="249" fill="#8A9BB5" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="10">MEMORY</text>
       <text x="668" y="278" fill="#F2F5FC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="23" font-weight="650">68%</text>
@@ -99,13 +99,13 @@
     </g>
 
     <rect x="518" y="321" width="400" height="118" rx="10" fill="#171F30" stroke="#26334A"/>
-    <text x="534" y="344" fill="#E5EAF4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="600">Performance</text>
+    <text x="534" y="344" fill="#E5EAF4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="600">Performance trend</text>
     <text x="861" y="344" fill="#8493AA" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="9">LAST 60 MIN</text>
     <g clip-path="url(#chartClip)">
-      <path d="M570 305 600 299 629 308 658 280 688 289 716 274 746 284 776 255 805 270 835 248 865 263 895 233 925 244v92H570v-31Z" fill="url(#chart)"/>
-      <path d="m570 305 30-6 29 9 29-28 30 9 28-15 30 10 30-29 29 15 30-22 30 15 30-30 30 11" stroke="#829EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M570 365h354M570 389h354M570 413h354" stroke="#2B3548" stroke-width="1"/>
-      <path d="M600 348v69M659 348v69M718 348v69M777 348v69M836 348v69M895 348v69" stroke="#273247" stroke-width="1"/>
+      <path d="M534 384C556 380 576 380 594 381S635 375 654 376 692 369 714 373 753 362 774 366 813 353 834 359 879 348 902 354V418H534Z" fill="url(#chart)"/>
+      <path d="M534 384C556 380 576 380 594 381S635 375 654 376 692 369 714 373 753 362 774 366 813 353 834 359 879 348 902 354" stroke="#829EFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M534 370h368M534 391h368M534 412h368" stroke="#2B3548" stroke-width="1"/>
+      <path d="M565 350v68M626 350v68M687 350v68M748 350v68M809 350v68M870 350v68" stroke="#273247" stroke-width="1"/>
     </g>
   </g>
 </svg>
