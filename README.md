@@ -1,5 +1,7 @@
 # MC Panels
 
+![MC Panels banner](docs/mc-panels-banner.svg)
+
 A live Minecraft server dashboard for Pterodactyl.
 
 | Overview | System Info | Console issues |
