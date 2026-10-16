@@ -1,0 +1,108 @@
+import { palette } from '../../framework/theme';
+import { formatBytes, formatNumber, formatPercent, formatRate } from '../../utils/format.util';
+import type { MetricDefinition } from './metric.types';
+
+const MEMORY_UNIT_FIELD = {
+    kind: 'select' as const,
+    key: 'unit',
+    label: 'Show memory as',
+    options: [
+        { value: 'percent', label: 'Percent of limit' },
+        { value: 'bytes', label: 'Absolute size' },
+    ],
+};
+
+const tpsHint = (features: { tps: boolean; bridge: boolean }) =>
+    features.tps ? null : 'TPS collection is disabled. Enable it in the MC Panels extension settings.';
+
+export const METRICS: MetricDefinition[] = [
+    {
+        id: 'online-players',
+        label: 'Online players',
+        icon: 'players',
+        color: palette.cyan,
+        trend: 'neutral',
+        keyFor: () => 'playersOnline',
+        liveValue: (live) => live.playersOnline,
+        format: (value) => formatNumber(value),
+        deltaMode: () => 'relative',
+        axisFloor: () => 4,
+        subtitle: (live) => (live.playersMax ? `/ ${live.playersMax}` : null),
+    },
+    {
+        id: 'registered-players',
+        label: 'Registered players',
+        icon: 'registered',
+        color: palette.violet,
+        trend: 'neutral',
+        keyFor: () => 'playersRegistered',
+        liveValue: (live) => live.playersRegistered,
+        format: (value) => formatNumber(value),
+        deltaMode: () => 'relative',
+        axisFloor: () => 4,
+    },
+    {
+        id: 'tps',
+        label: 'TPS',
+        icon: 'tps',
+        color: palette.good,
+        trend: 'higher-is-better',
+        keyFor: () => 'tps',
+        liveValue: (live) => live.tps,
+        format: (value) => formatNumber(value, 1),
+        deltaMode: () => 'points',
+        thresholds: () => ({ warn: 18, crit: 15, direction: 'below' }),
+        axisCap: () => 20,
+        unavailable: tpsHint,
+    },
+    {
+        id: 'ram',
+        label: 'RAM',
+        icon: 'memory',
+        color: palette.good,
+        trend: 'lower-is-better',
+        keyFor: (settings) => (settings.unit === 'bytes' ? 'memory' : 'memoryPercent'),
+        liveValue: (live, key) => (key === 'memory' ? live.memory : live.memoryPercent),
+        format: (value, key) => (key === 'memory' ? formatBytes(value) : formatPercent(value)),
+        deltaMode: (key) => (key === 'memory' ? 'relative' : 'points'),
+        thresholds: (key) => (key === 'memoryPercent' ? { warn: 75, crit: 90, direction: 'above' } : undefined),
+        axisCap: (key) => (key === 'memoryPercent' ? 100 : undefined),
+        fields: [MEMORY_UNIT_FIELD],
+        defaults: { unit: 'percent' },
+    },
+    {
+        id: 'cpu',
+        label: 'CPU',
+        icon: 'cpu',
+        color: palette.accent,
+        trend: 'lower-is-better',
+        keyFor: () => 'cpu',
+        liveValue: (live) => live.cpu,
+        format: (value) => formatPercent(value),
+        deltaMode: () => 'points',
+        subtitle: (live) => (live.cpuLimit ? `/ ${formatPercent(live.cpuLimit)} limit` : null),
+        axisFloor: () => 100,
+    },
+    {
+        id: 'network-up',
+        label: 'Network upstream',
+        icon: 'netUp',
+        color: palette.violet,
+        trend: 'neutral',
+        keyFor: () => 'netUp',
+        liveValue: (live) => live.netUp,
+        format: (value) => formatRate(value),
+        deltaMode: () => 'relative',
+    },
+    {
+        id: 'network-down',
+        label: 'Network downstream',
+        icon: 'netDown',
+        color: palette.cyan,
+        trend: 'neutral',
+        keyFor: () => 'netDown',
+        liveValue: (live) => live.netDown,
+        format: (value) => formatRate(value),
+        deltaMode: () => 'relative',
+    },
+];

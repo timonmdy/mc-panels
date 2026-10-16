@@ -1,0 +1,2 @@
+- { Signature: 'collect', Description: 'Collect MC Panels metrics for all enabled servers', Path: 'collect.php', Interval: '* * * * *' }
+- { Signature: 'prune', Description: 'Delete expired MC Panels data', Path: 'prune.php', Interval: 'daily' }
