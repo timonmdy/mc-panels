@@ -8,7 +8,7 @@ import { STORAGE_KEYS } from '../../config/storage.config';
 import { DashboardContext } from '../../data/DashboardContext';
 import { refreshAll } from '../../data/resource.store';
 import { ThemeRoot } from '../../framework/theme';
-import { Button, ConfirmationProvider, EmptyState, IconButton, Menu, MenuItem, Spinner } from '../../framework/ui';
+import { Button, ConfirmationProvider, EmptyState, Spinner } from '../../framework/ui';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { AddPanelDialog } from '../../features/panel-picker/AddPanelDialog';
 import { Dashboard } from '../../features/dashboard/Dashboard';
@@ -17,8 +17,7 @@ import { ProfileSwitcher } from '../../features/profiles/ProfileSwitcher/Profile
 import { useProfiles } from '../../features/profiles/useProfiles';
 import { Toolbar } from '../../features/toolbar/Toolbar';
 import { DataExplorerDialog } from '../../features/data-explorer/DataExplorerDialog';
-import { AccessKeysDialog } from '../../features/access-keys/AccessKeysDialog';
-import { AccessKeyEntryDialog } from '../../features/access-keys/AccessKeyEntryDialog';
+import { PermissionsDialog, RequestAccessPanel } from '../../features/permissions/PermissionsDialog';
 
 interface StartupError {
     message: string;
@@ -33,16 +32,15 @@ interface ContentProps {
     bootstrap: Bootstrap;
     serverIp: string | null;
     serverPort: number | null;
-    onEnterAccessKey: () => void;
 }
 
-const McPanelsContent = ({ uuid, bootstrap, serverIp, serverPort, onEnterAccessKey }: ContentProps) => {
+const McPanelsContent = ({ uuid, bootstrap, serverIp, serverPort }: ContentProps) => {
     const { config, permissions } = bootstrap;
     const [spanKey, setSpanKey] = useLocalStorage<string>(STORAGE_KEYS.timeSpan, config.defaultTimeSpan);
     const [editing, setEditing] = useState(false);
     const [picking, setPicking] = useState(false);
     const [exploringData, setExploringData] = useState(false);
-    const [managingAccessKeys, setManagingAccessKeys] = useState(false);
+    const [managingPermissions, setManagingPermissions] = useState(false);
     const profiles = useProfiles(uuid, bootstrap, permissions.editProfiles, permissions.editLayouts);
 
     const span = config.timeSpans.find((s) => s.key === spanKey) ?? config.timeSpans.find((s) => s.key === config.defaultTimeSpan) ?? config.timeSpans[0];
@@ -73,7 +71,7 @@ const McPanelsContent = ({ uuid, bootstrap, serverIp, serverPort, onEnterAccessK
                 span={span.key}
                 canWrite={canEditActiveLayout}
                 canExploreData={permissions.viewData}
-                canManageAccessKeys={permissions.manageAccessKeys}
+                canManagePermissions={permissions.managePermissions}
                 editing={editing}
                 saving={profiles.saving}
                 error={profiles.error}
@@ -81,8 +79,7 @@ const McPanelsContent = ({ uuid, bootstrap, serverIp, serverPort, onEnterAccessK
                 onRefresh={() => refreshAll()}
                 onAdd={() => setPicking(true)}
                 onExploreData={() => setExploringData(true)}
-                onManageAccessKeys={() => setManagingAccessKeys(true)}
-                onEnterAccessKey={onEnterAccessKey}
+                onManagePermissions={() => setManagingPermissions(true)}
                 onToggleEdit={() => setEditing((value) => !value)}
             />
 
@@ -106,8 +103,8 @@ const McPanelsContent = ({ uuid, bootstrap, serverIp, serverPort, onEnterAccessK
                     onClose={() => setExploringData(false)}
                 />
             )}
-            {managingAccessKeys && permissions.manageAccessKeys && (
-                <AccessKeysDialog uuid={uuid} onClose={() => setManagingAccessKeys(false)} />
+            {managingPermissions && permissions.managePermissions && (
+                <PermissionsDialog uuid={uuid} onClose={() => setManagingPermissions(false)} />
             )}
         </DashboardContext.Provider>
         </ConfirmationProvider>
@@ -119,13 +116,13 @@ const McPanelsPage = () => {
     const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
     const [error, setError] = useState<StartupError | null>(null);
     const [attempt, setAttempt] = useState(0);
-    const [enteringAccessKey, setEnteringAccessKey] = useState(false);
     const [copyMessage, setCopyMessage] = useState<string | null>(null);
     const uuid = server?.uuid;
 
     useEffect(() => {
         if (!uuid) return;
 
+        window.localStorage.removeItem(`mcpanels:access-key:${uuid}`);
         setError(null);
         setCopyMessage(null);
         fetchBootstrap(uuid).then(setBootstrap).catch((e) => {
@@ -163,22 +160,16 @@ const McPanelsPage = () => {
         <ThemeRoot $animationsEnabled={bootstrap?.config.animationsEnabled}>
             {error ? (
                 <>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                        <Menu
-                            renderTrigger={({ ref, onClick, active }) => (
-                                <IconButton ref={ref} icon='more' label='Dashboard actions' onClick={onClick} active={active} />
-                            )}
-                        >
-                            <MenuItem label='Enter access key' icon='shield' onSelect={() => setEnteringAccessKey(true)} />
-                        </Menu>
-                    </div>
                     <EmptyState
                         icon='warning'
                         title="MC Panels couldn't start"
                         hint={`${error.status && error.status >= 500
                             ? 'The panel server returned an internal error. Its response does not include the underlying cause; include the diagnostic report below when contacting your panel administrator.'
-                            : error.message} If you were given an MC Panels access key, open the … menu and choose Enter access key.`}
+                            : error.message}`}
                     />
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                        <Button variant='secondary' onClick={() => setAttempt((value) => value + 1)}>Retry</Button>
+                    </div>
                     <section aria-label='Startup diagnostics' style={{ maxWidth: 560, margin: '16px auto', padding: 12, border: '1px solid rgba(128, 128, 128, 0.35)', borderRadius: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
                             <strong>Diagnostic report</strong>
@@ -193,14 +184,23 @@ const McPanelsPage = () => {
                     <Spinner size={28} />
                 </div>
             ) : (
-                <McPanelsContent uuid={uuid} bootstrap={bootstrap} serverIp={allocation?.alias ?? allocation?.ip ?? null} serverPort={allocation?.port ?? null} onEnterAccessKey={() => setEnteringAccessKey(true)} />
-            )}
-            {enteringAccessKey && uuid && (
-                <AccessKeyEntryDialog
-                    uuid={uuid}
-                    onClose={() => setEnteringAccessKey(false)}
-                    onConnect={() => setAttempt((n) => n + 1)}
-                />
+                bootstrap.permissions.viewDashboard ? (
+                    <McPanelsContent
+                        uuid={uuid}
+                        bootstrap={bootstrap}
+                        serverIp={allocation?.alias ?? allocation?.ip ?? null}
+                        serverPort={allocation?.port ?? null}
+                    />
+                ) : (
+                    <RequestAccessPanel
+                        uuid={uuid}
+                        status={bootstrap.permissions.accessRequestStatus}
+                        onRequested={() => setBootstrap((current) => current ? {
+                            ...current,
+                            permissions: { ...current.permissions, accessRequestStatus: 'pending' },
+                        } : current)}
+                    />
+                )
             )}
         </ThemeRoot>
         </ServerContentBlock>

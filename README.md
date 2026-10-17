@@ -23,13 +23,13 @@ A live Minecraft server dashboard for Pterodactyl.
 
 Run the same command to update an existing installation.
 
-## Security and access keys
+## Security and permissions
 
-- The server owner and Pterodactyl root administrators can manage keys without a key of their own. The extension verifies ownership or the `root_admin` role.
-- Create and revoke keys from **Panels → … → Access keys**. A key is shown only once; only its SHA-256 hash is stored in the server-root `mcpanels.credentials` file.
-- Users must already be able to open that server in Pterodactyl. On the **Panels** page, open **… → Enter access key**, paste the key, and choose **Save key and connect**. It is saved in that browser for that server.
-- Grants: `view` (dashboard), `edit` (layouts and profiles), `data.view`, `data.manage` (also views data), `ips.view` (player IP addresses), or `*` (all MC Panels permissions, including key management). Edit and data grants also include dashboard viewing.
-- Keys do not grant Pterodactyl file, console, or power access. Use HTTPS and share keys securely.
+- Open **Panels → … → Permissions** to manage access for this server. Only the server owner and Pterodactyl root administrators can change permissions.
+- **Server-wide defaults** apply to every signed-in Pterodactyl user who already has access to the server. Individual user grants add to these defaults.
+- Grant additional permissions by the email address of an existing Pterodactyl account. The user must also be allowed to open the server in Pterodactyl; MC Panels permissions do not grant panel, console, file, or power access.
+- Users without dashboard access can request it from the Panels page. Their request appears in the server's Permissions modal; approving grants dashboard view only. Grant more permissions separately when needed.
+- Layout editing, profile management, data editing/deletion, and player IP access prompt for confirmation before they are granted. Data management also includes data viewing; elevated access includes dashboard viewing.
 
 ## Available panels
 
@@ -66,7 +66,8 @@ Run the same command to update an existing installation.
 ## Behavior notes
 
 - The panel scheduler must be running for metrics and player history.
-- TPS collection is disabled by default. Fabric needs a compatible plugin/mod HTTP endpoint for quiet bridge collection.
+- TPS collection is disabled by default. On Fabric 1.20.3+, use the vanilla `tick query` console command as the TPS source. Console queries add output to the server log; increase the TPS interval or configure an HTTP bridge for quiet collection.
+- For command-based TPS collection, select the matching output format in **TPS and world data**: Fabric `tick query`, Forge `forge tps`, or `spark tps`. Spark output includes five TPS windows; MC Panels records the first (5-second) value. Custom output can use a PHP regex with named `tps` and optional `mspt` captures.
 - IP history is collected from `logs/latest.log` when **Keep player IP history** is greater than `0`. Owners, root administrators, and keys with `ips.view` can see addresses.
 - Dashboard animations and detailed debug logging are in the extension’s **General** settings. Dragging previews panels smoothly moving into place when animations are enabled.
 - Data Explorer is limited to the current server; edits and deletions require confirmation.
@@ -79,3 +80,7 @@ npm run build
 ```
 
 The build type-checks the dashboard and creates `dist/mcpanels.blueprint`.
+
+### Adding a TPS command reader
+
+Add a class implementing `Minecraft\TpsReaders\TpsReader` in `app/Minecraft/TpsReaders/` with a filename ending in `Format.php`. Implement `key()`, `label()`, `command()`, and `parse()`. The registry discovers these files automatically and builds the admin selection from each reader's label and command; no central list needs editing. `parse()` receives each cleaned log message plus per-scan state and settings, and should return `['type' => 'tps', 'value' => float|null, 'mspt' => float]` when it recognizes a reading. Use `TpsReading::fromMspt()` when the output only provides milliseconds per tick.

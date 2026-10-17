@@ -14,17 +14,21 @@ class LogParser
         return ['time' => $m[1], 'level' => $m[2] === 'WARNING' ? 'WARN' : $m[2], 'message' => trim($m[3])];
     }
 
-    public function events(array $lines): array
+    public function events(array $lines, string $tpsFormat = 'auto', string $customTpsPattern = ''): array
     {
         $events = [];
+        $reader = TpsReaderRegistry::get($tpsFormat);
+        $readerState = [];
+        $readerSettings = ['tpsCustomPattern' => $customTpsPattern];
         foreach ($lines as $raw) {
             $line = $this->parseLine($raw);
-            if ($line === null) {
-                continue;
+            $message = $line['message'] ?? trim($this->clean((string) $raw));
+            $tpsEvent = $reader->parse($message, $readerState, $readerSettings);
+            if ($tpsEvent !== null) {
+                $events[] = $tpsEvent + ['time' => $line['time'] ?? date('H:i:s')];
             }
 
-            $event = $this->match($line['message']);
-            if ($event !== null) {
+            if ($line !== null && ($event = $this->match($line['message'])) !== null) {
                 $events[] = $event + ['time' => $line['time']];
             }
         }
@@ -119,16 +123,8 @@ class LogParser
             if (!preg_match($pattern, $message, $m)) {
                 continue;
             }
-            $event = ['type' => $type] + array_filter($m, 'is_string', ARRAY_FILTER_USE_KEY);
-            if ($type === 'tps') {
-                $event['value'] = $this->firstNumber($m['value']);
-            }
-            if ($type === 'mspt') {
-                $ms = (float) $m['value'];
-                $event = ['type' => 'tps', 'value' => $ms > 50 ? round(1000 / $ms, 2) : 20.0, 'mspt' => $ms];
-            }
 
-            return $event;
+            return ['type' => $type] + array_filter($m, 'is_string', ARRAY_FILTER_USE_KEY);
         }
 
         foreach (LogRules::FAILURE_LINES as $pattern) {
@@ -141,11 +137,6 @@ class LogParser
         }
 
         return null;
-    }
-
-    private function firstNumber(string $text): ?float
-    {
-        return preg_match('/\d+(?:\.\d+)?/', $text, $m) ? min(20.0, (float) $m[0]) : null;
     }
 
     private function clean(string $line): string

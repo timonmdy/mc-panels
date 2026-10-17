@@ -18,9 +18,14 @@ Route::group([
     Route::get('/failures', [Api\InsightsController::class, 'failures']);
     Route::get('/issues', [Api\InsightsController::class, 'issues']);
     Route::get('/info', [Api\InfoController::class, 'index']);
-    Route::get('/access-keys', [Api\AccessKeysController::class, 'index']);
-    Route::post('/access-keys', [Api\AccessKeysController::class, 'store']);
-    Route::delete('/access-keys/{id}', [Api\AccessKeysController::class, 'destroy'])->where('id', '[a-f0-9]{16}');
+    Route::get('/permissions', [Api\PermissionsController::class, 'index']);
+    Route::get('/permissions/requests', [Api\PermissionsController::class, 'requests']);
+    Route::put('/permissions/guests', [Api\PermissionsController::class, 'saveGuests']);
+    Route::post('/permissions/users', [Api\PermissionsController::class, 'grantUser']);
+    Route::delete('/permissions/users/{userId}', [Api\PermissionsController::class, 'revokeUser'])->whereNumber('userId');
+    Route::post('/permissions/requests', [Api\PermissionsController::class, 'requestAccess']);
+    Route::post('/permissions/requests/{requestId}/approve', [Api\PermissionsController::class, 'approveRequest'])->whereNumber('requestId');
+    Route::post('/permissions/requests/{requestId}/deny', [Api\PermissionsController::class, 'denyRequest'])->whereNumber('requestId');
     Route::get('/data-explorer', [Api\DataExplorerController::class, 'index']);
     Route::patch('/data-explorer/{table}/{id}', [Api\DataExplorerController::class, 'update'])
         ->where(['table' => '[a-z_]+', 'id' => '[0-9]+']);

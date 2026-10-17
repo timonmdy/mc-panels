@@ -31,6 +31,7 @@ class PingProbe implements Probe
 
         $c->sample['players_online'] = $status['online'];
         $c->sample['players_max'] = $status['max'];
+        $c->sampleUpdated = true;
         $c->remember('status', $status);
     }
 

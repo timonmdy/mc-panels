@@ -38,8 +38,18 @@ class Collector
 
     public function run(callable $log): void
     {
-        $interval = max(15, (int) $this->settings->get('pollSeconds'));
-        $loops = $interval < 60 ? intdiv(60, $interval) : 1;
+        $settings = $this->settings->all();
+        $intervals = [
+            (int) $settings['pollSeconds'],
+            (int) $settings['statusSeconds'],
+            (int) $settings['logSeconds'],
+            (int) $settings['registrySeconds'],
+        ];
+        if ($settings['tpsMode'] !== 'off') {
+            $intervals[] = (int) $settings['tpsSeconds'];
+        }
+        $interval = min(60, max(15, min($intervals)));
+        $loops = max(1, intdiv(60, $interval));
 
         for ($i = 0; $i < $loops; $i++) {
             $started = time();
@@ -57,9 +67,9 @@ class Collector
         DebugLog::write($settings, 'Collector tick started.', ['enabled_servers' => count($ids), 'interval_seconds' => $interval]);
 
         Server::query()->with('allocation')->whereNull('status')->whereIn('id', $ids)->get()
-            ->each(function (Server $server) use ($settings, $interval, $log) {
+            ->each(function (Server $server) use ($settings, $log) {
                 try {
-                    $this->collect($server, $settings, $interval);
+                    $this->collect($server, $settings, (int) $settings['pollSeconds']);
                 } catch (\Throwable $e) {
                     DebugLog::write($settings, 'Collector failed for server.', [
                         'server_id' => $server->id,
@@ -78,18 +88,24 @@ class Collector
         $cursor = $this->cursors->find($id);
         $c = new Context($server, $settings, $this->cursors->data($id), time(), $this->samples->latest($id), $cursor?->last_state);
 
-        if (!$c->due('resource', $interval)) {
-            return;
-        }
-        DebugLog::write($settings, 'Collecting server metrics.', ['server_id' => $id, 'state_before' => $c->lastState]);
-        $c->mark('resource');
-
-        $this->resource->handle($c);
-        $state = $c->sample['state'];
-        $c->wentDown = $c->lastState === 'running' && in_array($state, ['offline', 'starting'], true);
-        $c->cameUp = $c->running && $c->lastState !== 'running';
-        if ($c->wentDown) {
-            $this->players->resetOnline($id);
+        $resourceDue = $c->due('resource', $interval);
+        if ($resourceDue) {
+            DebugLog::write($settings, 'Collecting server metrics.', ['server_id' => $id, 'state_before' => $c->lastState]);
+            $c->mark('resource');
+            $this->resource->handle($c);
+            $state = $c->sample['state'];
+            $c->wentDown = $c->lastState === 'running' && in_array($state, ['offline', 'starting'], true);
+            $c->cameUp = $c->running && $c->lastState !== 'running';
+            if ($c->wentDown) {
+                $this->players->resetOnline($id);
+            }
+        } else {
+            $state = $c->lastState ?? (string) ($c->previous->state ?? 'offline');
+            $c->running = $state === 'running';
+            $c->sample = ['state' => $state];
+            foreach (['cpu', 'mem_bytes', 'mem_limit', 'disk_bytes', 'disk_limit', 'net_rx_bytes', 'net_tx_bytes', 'net_up', 'net_down', 'uptime_ms', 'players_online', 'players_max', 'players_registered', 'tps', 'mspt'] as $column) {
+                $c->sample[$column] = $c->previous->{$column} ?? null;
+            }
         }
 
         $this->ping->handle($c);
@@ -103,7 +119,7 @@ class Collector
         $this->bridge->handle($c);
         $this->registry->handle($c);
 
-        $this->finish($c, $state);
+        $this->finish($c, $state, $resourceDue || $c->sampleUpdated);
         DebugLog::write($settings, 'Collection cycle completed.', [
             'server_id' => $id,
             'state' => $state,
@@ -116,7 +132,7 @@ class Collector
         ]);
     }
 
-    private function finish(Context $c, string $state): void
+    private function finish(Context $c, string $state, bool $sampleDue): void
     {
         $id = $c->server->id;
 
@@ -162,7 +178,9 @@ class Collector
         $registered = max($counts['registered'], (int) $c->meta('registeredFiles', 0));
         $sample['players_registered'] = $registered > 0 ? $registered : null;
 
-        $this->samples->insert($id, ['ts' => $c->now] + $sample);
+        if ($sampleDue) {
+            $this->samples->insert($id, ['ts' => $c->now] + $sample);
+        }
         $this->cursors->save($id, ['last_state' => $state, 'data' => $c->data]);
     }
 }

@@ -50,8 +50,14 @@ class BridgeProbe implements Probe
         if ($s['tpsMode'] === 'bridge') {
             $tps = JsonPath::get($json, (string) $s['bridgeTpsPath']);
             $mspt = JsonPath::get($json, (string) $s['bridgeMsptPath']);
-            $c->sample['tps'] = is_numeric($tps) ? min(20.0, round((float) $tps, 2)) : null;
-            $c->sample['mspt'] = is_numeric($mspt) ? round((float) $mspt, 2) : null;
+            if (is_numeric($tps)) {
+                $c->sample['tps'] = min(20.0, round((float) $tps, 2));
+                $c->sampleUpdated = true;
+            }
+            if (is_numeric($mspt)) {
+                $c->sample['mspt'] = round((float) $mspt, 2);
+                $c->sampleUpdated = true;
+            }
             DebugLog::write($s, is_numeric($tps) ? 'Bridge TPS values parsed.' : 'Bridge TPS value missing or non-numeric.', [
                 'server_id' => $c->server->id,
                 'tps_path' => (string) $s['bridgeTpsPath'],

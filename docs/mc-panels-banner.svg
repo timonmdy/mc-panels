@@ -27,7 +27,7 @@
     </clipPath>
   </defs>
 
-  <rect width="1000" height="560" rx="24" fill="url(#background)"/>
+  <rect width="1000" height="560" fill="url(#background)"/>
   <circle cx="178" cy="114" r="184" fill="#527DFF" fill-opacity=".08"/>
   <circle cx="866" cy="481" r="220" fill="#806CFF" fill-opacity=".06"/>
   <path d="M0 455C188 386 315 415 460 560H0V455Z" fill="#182238" fill-opacity=".55"/>

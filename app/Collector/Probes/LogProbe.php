@@ -34,12 +34,11 @@ class LogProbe implements Probe
         }
         $c->mark('log');
 
-        $lines = $this->files->lines($c->server, self::LOG, (int) $c->settings['logMaxKiB'] * 1024);
+        $lines = $this->files->lines($c->server, self::LOG);
         if ($lines === null) {
-            DebugLog::write($c->settings, 'Server log could not be read; check the file size limit and file access.', [
+            DebugLog::write($c->settings, 'Server log could not be read; check that the file exists and is accessible.', [
                 'server_id' => $c->server->id,
                 'path' => self::LOG,
-                'max_bytes' => (int) $c->settings['logMaxKiB'] * 1024,
             ]);
 
             return;
@@ -50,7 +49,11 @@ class LogProbe implements Probe
         $head = md5(implode("\n", array_slice($lines, 0, 3)));
         $start = $cursor && $cursor->log_head === $head && $cursor->log_lines <= count($lines) ? (int) $cursor->log_lines : 0;
 
-        $events = $this->parser->events(array_slice($lines, $start));
+        $events = $this->parser->events(
+            array_slice($lines, $start),
+            (string) ($c->settings['tpsFormat'] ?? 'auto'),
+            (string) ($c->settings['tpsCustomPattern'] ?? ''),
+        );
         $loginEvents = array_values(array_filter($events, fn ($event) => $event['type'] === 'login'));
         $loginLines = array_filter(
             array_slice($lines, $start),
@@ -80,7 +83,7 @@ class LogProbe implements Probe
             }
         }
         if ($c->wentDown) {
-            $tail = $this->parser->events(array_slice($lines, -200));
+            $tail = $this->parser->events(array_slice($lines, -200), (string) ($c->settings['tpsFormat'] ?? 'auto'));
             $c->gracefulStop = count(array_filter($tail, fn ($e) => $e['type'] === 'stopping')) > 0;
             DebugLog::write($c->settings, 'Shutdown log evidence checked.', [
                 'server_id' => $id,
@@ -126,9 +129,12 @@ class LogProbe implements Probe
     {
         if ($event['value'] !== null) {
             $c->sample['tps'] = $event['value'];
+            $c->tpsParsed = true;
+            $c->sampleUpdated = true;
         }
         if (isset($event['mspt'])) {
             $c->sample['mspt'] = $event['mspt'];
+            $c->sampleUpdated = true;
         }
     }
 }

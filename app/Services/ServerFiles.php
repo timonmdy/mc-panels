@@ -11,7 +11,7 @@ class ServerFiles
     {
     }
 
-    public function read(Server $server, string $path, int $maxBytes = 1048576): ?string
+    public function read(Server $server, string $path, ?int $maxBytes = 1048576): ?string
     {
         try {
             return $this->files->setServer($server)->getContent($path, $maxBytes);
@@ -41,9 +41,16 @@ class ServerFiles
         }
     }
 
-    public function lines(Server $server, string $path, int $maxBytes): ?array
+    public function lines(Server $server, string $path, ?int $maxBytes = null): ?array
     {
-        $content = $this->read($server, $path, $maxBytes);
+        $content = $this->read($server, $path, null);
+        if ($content !== null && $maxBytes !== null && strlen($content) > $maxBytes) {
+            $content = substr($content, -$maxBytes);
+            $firstNewline = strpos($content, "\n");
+            if ($firstNewline !== false) {
+                $content = substr($content, $firstNewline + 1);
+            }
+        }
 
         return $content === null ? null : preg_split('/\r?\n/', $content);
     }

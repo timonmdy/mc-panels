@@ -10,6 +10,7 @@ use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Services\ServerFiles;
 use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Storage\FailureStore;
 use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Support\Settings;
 use Pterodactyl\Models\Server;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
 class InsightsController extends McController
 {
@@ -47,8 +48,11 @@ class InsightsController extends McController
         $cacheKey = 'mcpanels:issues:' . $server->id . ':' . md5(implode("\n", $patterns));
         $entries = Cache::remember($cacheKey, self::ISSUES_CACHE_SECONDS, function () use ($server, $patterns) {
             $lines = $this->files->lines($server, '/logs/latest.log', (int) $this->settings->get('logMaxKiB') * 1024);
+            if ($lines === null) {
+                throw new ServiceUnavailableHttpException(null, 'Unable to read the server log. Check that logs/latest.log exists and is accessible.');
+            }
 
-            return $lines === null ? [] : $this->parser->issues(
+            return $this->parser->issues(
                 $lines,
                 200,
                 $patterns,

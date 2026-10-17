@@ -4,9 +4,9 @@ namespace Pterodactyl\BlueprintFramework\Extensions\mcpanels\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Support\DebugLog;
-use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Support\AccessKeys;
 use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Support\Permissions;
 use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Support\Settings;
+use Pterodactyl\BlueprintFramework\Extensions\mcpanels\Support\ServerPermissions;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Models\Server;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -52,18 +52,15 @@ abstract class McController extends Controller
         return $this->canAny($request, $server, [Permissions::EDIT_PROFILES, 'settings.rename']);
     }
 
-    protected function canManageAccessKeys(Request $request, Server $server): bool
+    protected function canManagePermissions(Request $request, Server $server): bool
     {
         return (bool) $request->user()->root_admin
-            || (int) $server->owner_id === (int) $request->user()->id
-            || app(AccessKeys::class)->allows($request, $server, '*');
+            || (int) $server->owner_id === (int) $request->user()->id;
     }
 
-    protected function authorizeAccessKeyManagement(Request $request, Server $server): void
+    protected function canViewDashboard(Request $request, Server $server): bool
     {
-        if (!$this->canManageAccessKeys($request, $server)) {
-            throw new AccessDeniedHttpException('Only the server owner, a panel administrator, or a * key holder can manage MC Panels access keys.');
-        }
+        return $this->canAny($request, $server, [Permissions::READ, 'websocket.connect']);
     }
 
     protected function canViewData(Request $request, Server $server): bool
@@ -78,9 +75,7 @@ abstract class McController extends Controller
 
     protected function canSeeIps(Request $request, Server $server): bool
     {
-        return (bool) $request->user()->root_admin
-            || (int) $server->owner_id === (int) $request->user()->id
-            || app(AccessKeys::class)->allows($request, $server, Permissions::VIEW_IPS);
+        return $this->canAny($request, $server, [Permissions::VIEW_IPS]);
     }
 
     protected function spanSeconds(Request $request): int
@@ -107,7 +102,7 @@ abstract class McController extends Controller
         }
     }
 
-    private function canAny(Request $request, Server $server, array $abilities): bool
+    protected function canAny(Request $request, Server $server, array $abilities): bool
     {
         if ((bool) $request->user()->root_admin || (int) $server->owner_id === (int) $request->user()->id) {
             return true;
@@ -117,7 +112,7 @@ abstract class McController extends Controller
             if ($request->user()->can($ability, $server)) {
                 return true;
             }
-            if (app(AccessKeys::class)->allows($request, $server, $ability)) {
+            if (app(ServerPermissions::class)->allows($server, (int) $request->user()->id, $ability)) {
                 return true;
             }
         }

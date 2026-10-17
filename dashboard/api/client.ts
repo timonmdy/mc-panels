@@ -16,27 +16,6 @@ const backgroundHttp = axios.create({
     },
 });
 
-const accessKeyStorageKey = (serverUuid: string): string => `mcpanels:access-key:${serverUuid}`;
-
-export const getAccessKey = (serverUuid: string): string => {
-    if (typeof window === 'undefined') return '';
-
-    return window.localStorage.getItem(accessKeyStorageKey(serverUuid)) ?? '';
-};
-
-export const setAccessKey = (serverUuid: string, value: string): void => {
-    if (typeof window === 'undefined') return;
-    const key = value.trim();
-    if (key) window.localStorage.setItem(accessKeyStorageKey(serverUuid), key);
-    else window.localStorage.removeItem(accessKeyStorageKey(serverUuid));
-};
-
-const accessHeaders = (serverUuid: string): Record<string, string> => {
-    const key = getAccessKey(serverUuid);
-
-    return key ? { 'X-MCPanels-Key': key } : {};
-};
-
 export const setDebugLogging = (enabled: boolean): void => {
     debugLogging = enabled;
     if (debugLogging) {
@@ -87,10 +66,10 @@ const request = async <T>(method: string, path: string, operation: () => Promise
 };
 
 export const apiGet = <T>(serverUuid: string, path: string, params?: Params): Promise<T> =>
-    request('GET', path, () => backgroundHttp.get<T>(url(serverUuid, path), { params, headers: accessHeaders(serverUuid) }));
+    request('GET', path, () => backgroundHttp.get<T>(url(serverUuid, path), { params }));
 
-export const apiSend = <T>(method: 'post' | 'patch' | 'delete', serverUuid: string, path: string, body?: unknown): Promise<T> =>
-    request(method.toUpperCase(), path, () => http.request<T>({ method, url: url(serverUuid, path), data: body, headers: accessHeaders(serverUuid) }));
+export const apiSend = <T>(method: 'post' | 'put' | 'patch' | 'delete', serverUuid: string, path: string, body?: unknown): Promise<T> =>
+    request(method.toUpperCase(), path, () => http.request<T>({ method, url: url(serverUuid, path), data: body }));
 
 export const errorMessage = (error: unknown): string => httpErrorToHuman(error);
 

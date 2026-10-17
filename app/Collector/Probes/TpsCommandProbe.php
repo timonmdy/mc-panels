@@ -51,7 +51,7 @@ class TpsCommandProbe implements Probe
             return;
         }
 
-        if (isset($c->sample['tps'])) {
+        if ($c->tpsParsed) {
             $c->remember('tpsMisses', 0);
             DebugLog::write($c->settings, 'TPS response parsed.', [
                 'server_id' => $c->server->id,

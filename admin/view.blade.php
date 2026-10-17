@@ -72,11 +72,16 @@ No matching log lines.
           <div class="row">
             @foreach ($fields as $key => $field)
               <div class="form-group col-md-6">
-                <label for="mcp-{{ $key }}" class="control-label">{{ $field['label'] }}</label>
+                <label for="mcp-{{ $key }}" class="control-label">
+                  {{ $field['label'] }}
+                  @if ($key === 'tpsCustomPattern')
+                    <span class="glyphicon glyphicon-info-sign" title="This regular expression is only editable and used when Command output format is set to Custom regular expression." aria-label="Only used with Custom regular expression" style="cursor: help"></span>
+                  @endif
+                </label>
                 @if ($field['type'] === 'select')
-                  <select id="mcp-{{ $key }}" name="{{ $key }}" class="form-control">
+                  <select id="mcp-{{ $key }}" name="{{ $key }}" class="form-control" @if ($key === 'tpsFormat') data-tps-format @endif>
                     @foreach ($field['options'] as $value => $label)
-                      <option value="{{ $value }}" @selected($values[$key] === $value)>{{ $label }}</option>
+                      <option value="{{ $value }}" @selected(old($key, $values[$key]) === $value)>{{ $label }}</option>
                     @endforeach
                   </select>
                 @elseif ($field['type'] === 'bool')
@@ -89,11 +94,14 @@ No matching log lines.
                 @elseif ($field['type'] === 'textarea')
                   <textarea id="mcp-{{ $key }}" name="{{ $key }}" rows="5" class="form-control">{{ $values[$key] }}</textarea>
                 @else
-                  <input id="mcp-{{ $key }}" type="text" name="{{ $key }}" value="{{ $values[$key] }}" class="form-control" />
+                  <input id="mcp-{{ $key }}" type="text" name="{{ $key }}" value="{{ old($key, $values[$key]) }}" class="form-control" @if ($key === 'tpsCustomPattern' && old('tpsFormat', $values['tpsFormat']) !== 'custom') disabled @endif @if ($key === 'tpsCustomPattern') data-tps-custom-pattern title="Only enabled when Command output format is set to Custom regular expression." @endif />
                 @endif
                 @isset($field['help'])
                   <p class="text-muted small">{{ $field['help'] }}</p>
                 @endisset
+                @error($key)
+                  <p class="text-danger small">{{ $message }}</p>
+                @enderror
               </div>
             @endforeach
           </div>
@@ -109,4 +117,16 @@ No matching log lines.
       </div>
     </div>
   </form>
+  <script>
+    (() => {
+      const format = document.querySelector('[data-tps-format]');
+      const pattern = document.querySelector('[data-tps-custom-pattern]');
+      if (!format || !pattern) return;
+      const updatePatternState = () => {
+        pattern.disabled = format.value !== 'custom';
+      };
+      format.addEventListener('change', updatePatternState);
+      updatePatternState();
+    })();
+  </script>
 @endif

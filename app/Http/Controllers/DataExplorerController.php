@@ -159,7 +159,7 @@ class DataExplorerController extends McController
             abort(422, 'One or more fields cannot be edited.');
         }
         if (!$this->canSeeIps($request, $server) && array_intersect(['ip', 'last_ip'], array_keys($allowed)) !== []) {
-            abort(403, 'Viewing player IP data requires the ips.view access-key grant.');
+            abort(403, 'Viewing player IP data requires the ips.view permission.');
         }
         foreach (['layout', 'data'] as $jsonKey) {
             if (isset($allowed[$jsonKey]) && is_string($allowed[$jsonKey])) {

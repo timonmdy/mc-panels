@@ -12,8 +12,6 @@ final class LogRules
         'leave' => '/^(?<name>\w{1,16}) left the game$/',
         'uuid' => '/^UUID of player (?<name>\w{1,16}) is (?<uuid>[0-9a-fA-F-]{32,36})$/',
         'stopping' => '/^Stopping (?:the )?server/',
-        'tps' => '/^(?:TPS from last [^:]+|(?:Current )?TPS(?:\s*\([^)]*\))?)\s*:\s*(?<value>.+)$/i',
-        'mspt' => '/(?:Average time per tick|Average tick time):\s*(?<value>[\d.]+)\s*ms/i',
     ];
 
     public const FAILURE_LINES = [

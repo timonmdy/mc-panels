@@ -20,12 +20,14 @@ export interface PublicConfig {
 }
 
 export interface Permissions {
+    viewDashboard: boolean;
     editLayouts: boolean;
     editProfiles: boolean;
     viewData: boolean;
     manageData: boolean;
-    manageAccessKeys: boolean;
+    managePermissions: boolean;
     seeIps: boolean;
+    accessRequestStatus: 'pending' | 'approved' | 'denied' | null;
 }
 
 export interface PanelInstance {
@@ -79,19 +81,28 @@ export interface DataExplorerResponse {
     perPage: number;
 }
 
-export interface AccessKeyRecord {
-    id: string;
-    name: string;
-    permissions: string[];
+export type ServerGrant = 'view' | 'layouts.edit' | 'profiles.manage' | 'data.view' | 'data.manage' | 'ips.view';
+
+export interface ServerPermissionUser {
+    id: number;
+    email: string;
+    permissions: ServerGrant[];
+    updatedAt: string;
+}
+
+export interface ServerPermissionRequest {
+    id: number;
+    userId: number;
+    email: string;
+    permissions: ServerGrant[];
+    status: 'pending';
     createdAt: string;
 }
 
-export interface AccessKeysResponse {
-    keys: AccessKeyRecord[];
-}
-
-export interface CreatedAccessKey extends AccessKeyRecord {
-    key: string;
+export interface ServerPermissionsResponse {
+    guestPermissions: ServerGrant[];
+    users: ServerPermissionUser[];
+    requests: ServerPermissionRequest[];
 }
 
 export interface LiveSnapshot {

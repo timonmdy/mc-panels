@@ -11,6 +11,8 @@ final class Context
     public bool $wentDown = false;
     public bool $cameUp = false;
     public bool $tpsRequested = false;
+    public bool $tpsParsed = false;
+    public bool $sampleUpdated = false;
     public ?bool $gracefulStop = null;
 
     public function __construct(

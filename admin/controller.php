@@ -64,7 +64,27 @@ class {identifier}ExtensionController extends Controller
 
     public function patch(Request $request): RedirectResponse
     {
-        $this->settings->save($request->all());
+        if ($request->input('tpsFormat') === 'custom') {
+            $request->validate([
+                'tpsCustomPattern' => [
+                    'required',
+                    'string',
+                    'max:300',
+                    function (string $attribute, mixed $value, \Closure $fail): void {
+                        if (!is_string($value) || @preg_match($value, '') === false) {
+                            $fail('Enter a valid PHP regular expression, including its delimiters.');
+                        } elseif (!str_contains($value, '(?<tps>')) {
+                            $fail('The custom pattern must include a named (?<tps>...) capture.');
+                        }
+                    },
+                ],
+            ]);
+        }
+        $input = $request->all();
+        if (($input['tpsFormat'] ?? null) !== 'custom') {
+            $input['tpsCustomPattern'] = $this->settings->get('tpsCustomPattern');
+        }
+        $this->settings->save($input);
 
         return redirect()->back()->with('success', 'MC Panels settings saved.');
     }
