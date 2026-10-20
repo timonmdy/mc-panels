@@ -12,7 +12,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
-    "@fortawesome/react-fontawesome": "^0.1.16",
+    "@fortawesome/react-fontawesome": "^3.5.0",
     "@types/react": "^16.14.0",
     "@types/react-dom": "^16.9.0",
     "@types/styled-components": "^5.1.0",
