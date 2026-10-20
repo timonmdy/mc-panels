@@ -5,6 +5,11 @@ on:
     types:
       - created
 
+permissions:
+  contents: write
+  issues: write
+  actions: write
+  pull-requests: read
 
 concurrency:
   group: pr-version-${{ github.event.issue.number }}
