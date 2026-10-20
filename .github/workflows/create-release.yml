@@ -41,14 +41,14 @@ jobs:
           NODE
       - name: Check out trusted main scripts
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: trusted
           persist-credentials: false
       - name: Check out PR branch
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
           path: source
