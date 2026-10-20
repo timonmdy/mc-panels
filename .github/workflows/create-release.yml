@@ -5,23 +5,22 @@ on:
     types:
       - created
 
-permissions:
-  contents: write
-  issues: write
-  actions: write
-  pull-requests: read
 
 concurrency:
   group: pr-version-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
-  request:
+  auto_labeler:
     if: >-
       github.event.comment.author_association == 'OWNER' &&
       github.event.issue.pull_request != null &&
       contains(github.event.comment.body, '/create-release')
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      
     steps:
       - name: Get pull request details
         id: pr
@@ -39,6 +38,7 @@ jobs:
           fs.appendFileSync(output, `head_sha=${pr.head.sha}\n`);
           fs.appendFileSync(output, `base_ref=${pr.base.ref}\n`);
           NODE
+
       - name: Check out trusted main scripts
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         uses: actions/checkout@v7
@@ -46,12 +46,14 @@ jobs:
           ref: main
           path: trusted
           persist-credentials: false
+
       - name: Check out PR branch
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         uses: actions/checkout@v7
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
           path: source
+
       - name: Sync version and push release intent
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         id: version
@@ -70,20 +72,23 @@ jobs:
             git -C source commit -m "chore: prepare release v$version"
             git -C source push origin "HEAD:refs/heads/$HEAD_REF"
           fi
+
       - name: Mark pull request for release
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          gh label create release --repo "$GITHUB_REPOSITORY" --description "Create a draft release when this PR merges" --color 0E8A16 --force
-          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label release
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" -f "labels[]=release"
+
       - name: Run CI on the updated PR branch
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_REF: ${{ steps.pr.outputs.head_ref }}
-        run: gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/dispatches" -f "ref=$HEAD_REF"
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/dispatches" -f "ref=$HEAD_REF"
+
       - name: Reject unsupported pull request
         if: steps.pr.outputs.head_repo != github.repository || steps.pr.outputs.base_ref != 'main'
         run: |
