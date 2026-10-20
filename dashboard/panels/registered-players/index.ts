@@ -1,5 +1,7 @@
+import React from 'react';
 import { definePanel } from '../registry/panel.types';
 import { REGISTERED_DEFAULTS, REGISTERED_FIELDS } from './registeredPlayers.config';
+import { RegisteredPlayersInfo } from './RegisteredPlayersInfo';
 import { RegisteredPlayersPanel } from './RegisteredPlayersPanel';
 
 export const registeredPlayersPanel = definePanel({
@@ -14,4 +16,5 @@ export const registeredPlayersPanel = definePanel({
     defaultSettings: REGISTERED_DEFAULTS,
     fields: REGISTERED_FIELDS,
     component: RegisteredPlayersPanel,
+    info: React.createElement(RegisteredPlayersInfo),
 });
