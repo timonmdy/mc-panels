@@ -82,14 +82,15 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
           gh label create release --repo "$GITHUB_REPOSITORY" --description "Create a draft release when this PR merges" --color 0E8A16 --force
-          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label release
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" -f "labels[]=release"
 
       - name: Run CI on the updated PR branch
         if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_REF: ${{ steps.pr.outputs.head_ref }}
-        run: gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/dispatches" -f "ref=$HEAD_REF"
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/dispatches" -f "ref=$HEAD_REF"
 
       - name: Reject unsupported pull request
         if: steps.pr.outputs.head_repo != github.repository || steps.pr.outputs.base_ref != 'main'
