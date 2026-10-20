@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  request:
+  auto_labeler:
     if: >-
       github.event.comment.author_association == 'OWNER' &&
       github.event.issue.pull_request != null &&
@@ -79,7 +79,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          gh label create release --repo "$GITHUB_REPOSITORY" --description "Create a draft release when this PR merges" --color 0E8A16 --force
           gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" -f "labels[]=release"
 
       - name: Run CI on the updated PR branch
