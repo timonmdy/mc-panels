@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { color } from '../../framework/theme';
-import { Button, Field, Input, Select, TextArea, Toggle } from '../../framework/ui';
+import { Button, Collapsible, Field, Input, Select, TextArea, Toggle } from '../../framework/ui';
 import type { SettingField } from '../../panels/registry';
 
 const Form = styled.div`
@@ -59,6 +59,7 @@ const PatternHelp = styled.small`
 
 interface Props {
     fields: SettingField[];
+    advancedFields?: SettingField[];
     values: Record<string, unknown>;
     onChange: (key: string, value: unknown) => void;
 }
@@ -131,9 +132,8 @@ const RegexListField = ({
     );
 };
 
-export const SettingsForm = ({ fields, values, onChange }: Props) => (
-    <Form>
-        {fields.map((field) => {
+export const SettingsForm = ({ fields, advancedFields = [], values, onChange }: Props) => {
+    const renderFields = (items: SettingField[]) => items.map((field) => {
             switch (field.kind) {
                 case 'toggle':
                     return (
@@ -182,6 +182,16 @@ export const SettingsForm = ({ fields, values, onChange }: Props) => (
                         </Field>
                     );
             }
-        })}
-    </Form>
-);
+        });
+
+    return (
+        <Form>
+            {renderFields(fields)}
+            {advancedFields.length > 0 && (
+                <Collapsible title='Advanced options'>
+                    {renderFields(advancedFields)}
+                </Collapsible>
+            )}
+        </Form>
+    );
+};

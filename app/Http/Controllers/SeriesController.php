@@ -44,7 +44,13 @@ class SeriesController extends McController
         $from = $to - $this->spanSeconds($request);
         $bars = (int) $request->query('bars', 60);
 
-        return response()->json($this->samples->availability($server->id, $from, $to, $bars) + [
+        return response()->json($this->samples->availability(
+            $server->id,
+            $from,
+            $to,
+            $bars,
+            (int) $this->settings->get('pollSeconds'),
+        ) + [
             'outages' => $this->events->count($server->id, 'crash', $from),
         ]);
     }

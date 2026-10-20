@@ -85,10 +85,13 @@ class SampleStore
         return $out;
     }
 
-    public function availability(int $serverId, int $from, int $to, int $bars): array
+    public function availability(int $serverId, int $from, int $to, int $bars, int $sampleIntervalSeconds): array
     {
         $bars = max(1, min(240, $bars));
-        $bucket = max(60, (int) ceil(($to - $from) / $bars));
+        $span = max(1, $to - $from);
+        $maxBarsForSampleRate = max(1, (int) ceil($span / max(1, $sampleIntervalSeconds)));
+        $bars = min($bars, $maxBarsForSampleRate);
+        $bucket = max(1, (int) ceil($span / $bars));
 
         $rows = DB::table(self::TABLE)
             ->selectRaw("FLOOR((ts - {$from}) / {$bucket}) AS b, SUM(state = 'running') AS up, COUNT(*) AS n")

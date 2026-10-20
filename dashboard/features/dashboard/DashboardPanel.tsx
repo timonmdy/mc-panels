@@ -1,7 +1,7 @@
-import React, { HTMLAttributes } from 'react';
+import React, { HTMLAttributes, useState } from 'react';
 import type { PanelInstance } from '../../api/api.types';
 import { PanelFrame } from '../../framework/panel-frame';
-import { EmptyState, Icon, IconButton, Menu, MenuItem, MenuSeparator } from '../../framework/ui';
+import { EmptyState, Icon, IconButton, Menu, MenuItem, MenuSeparator, Modal } from '../../framework/ui';
 import { getPanelDefinition } from '../../panels/registry';
 import { BareWrap, Floating } from './DashboardPanel.styles';
 
@@ -17,6 +17,7 @@ interface Props {
 }
 
 export const DashboardPanel = ({ instance, canWrite, handleProps, rowTargets, onSettings, onRemove, onMoveToRow, onSettingsChange }: Props) => {
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
     const definition = getPanelDefinition(instance.type);
 
     if (!definition) {
@@ -42,16 +43,23 @@ export const DashboardPanel = ({ instance, canWrite, handleProps, rowTargets, on
         return (
             <BareWrap>
                 {body}
-                {canWrite && (
+                {(canWrite || definition.info) && (
                     <Floating>
-                        {handleProps && <span {...handleProps} style={{ display: 'grid', placeItems: 'center', width: 24, cursor: 'grab' }}><Icon name='grip' /></span>}
+                        {canWrite && handleProps && <span {...handleProps} style={{ display: 'grid', placeItems: 'center', width: 24, cursor: 'grab' }}><Icon name='grip' /></span>}
                         <Menu renderTrigger={({ ref, onClick, active }) => <IconButton ref={ref} icon='more' label='Panel options' active={active} onClick={onClick} />}>
-                            {hasSettings && <MenuItem icon='settings' label='Panel settings' onSelect={onSettings} />}
-                            {rowTargets.map((row) => <MenuItem key={row.id} icon='layers' label={`Move to ${row.label}`} onSelect={() => onMoveToRow(row.id)} />)}
-                            {rowTargets.length > 0 && <MenuSeparator />}
-                            <MenuItem icon='trash' label='Remove panel' danger onSelect={onRemove} />
+                            {definition.info && <MenuItem icon='info' label='Panel information' onSelect={() => setIsInfoOpen(true)} />}
+                            {definition.info && canWrite && hasSettings && <MenuSeparator />}
+                            {canWrite && hasSettings && <MenuItem icon='settings' label='Panel settings' onSelect={onSettings} />}
+                            {canWrite && rowTargets.map((row) => <MenuItem key={row.id} icon='layers' label={`Move to ${row.label}`} onSelect={() => onMoveToRow(row.id)} />)}
+                            {canWrite && rowTargets.length > 0 && <MenuSeparator />}
+                            {canWrite && <MenuItem icon='trash' label='Remove panel' danger onSelect={onRemove} />}
                         </Menu>
                     </Floating>
+                )}
+                {definition.info && isInfoOpen && (
+                    <Modal title={`${definition.title} information`} onClose={() => setIsInfoOpen(false)}>
+                        {definition.info}
+                    </Modal>
                 )}
             </BareWrap>
         );
@@ -61,6 +69,7 @@ export const DashboardPanel = ({ instance, canWrite, handleProps, rowTargets, on
         <PanelFrame
             title={definition.titleOf ? definition.titleOf(settings) : definition.title}
             icon={definition.icon}
+            info={definition.info}
             handleProps={handleProps}
             onSettings={canWrite && hasSettings ? onSettings : undefined}
             onRemove={canWrite ? onRemove : undefined}

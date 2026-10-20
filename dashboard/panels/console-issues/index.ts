@@ -32,5 +32,6 @@ export const consoleIssuesPanel = definePanel({
             library: CONSOLE_ISSUE_IGNORE_LIBRARY,
         },
     ],
+    info: "Console errors and warnings are read from the server's current logs/latest.log file; they are not stored in the MC Panels database. Only issues from the current day's log are shown. The selected dashboard time span does not affect this panel.",
     component: ConsoleIssuesPanel,
 });
