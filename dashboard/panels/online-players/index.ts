@@ -5,7 +5,7 @@ import { OnlinePlayersPanel } from './OnlinePlayersPanel';
 export const onlinePlayersPanel = definePanel({
     type: 'online-players-list',
     title: 'Online players',
-    description: 'Who is on the server right now.',
+    description: 'Who is playing on the server right now.',
     icon: 'players',
     category: 'Players',
     multiple: false,
