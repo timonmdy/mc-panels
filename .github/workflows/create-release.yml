@@ -18,9 +18,8 @@ jobs:
       contains(github.event.comment.body, '/create-release')
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      issues: write
       pull-requests: write
-      repository-projects: write
 
     steps:
       - name: Get pull request details
