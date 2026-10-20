@@ -32,14 +32,6 @@ See the [MC Panels Wiki](https://github.com/timonmdy/mc-panels/wiki) for:
 - [Coding guidelines](https://github.com/timonmdy/mc-panels/wiki/Coding-Guidelines)
 - [Adding panels](https://github.com/timonmdy/mc-panels/wiki/Adding-Panels)
 
-## Releases
-
-Repository owners can comment on an issue with `/create-release` to create a draft release with the next patch version. To choose a version, provide it explicitly, for example `/create-release 1.2.0`. The workflow updates `package.json`, `package-lock.json`, and `conf.yml`, builds the extension, commits the version bump to `main`, and attaches only `mcpanels.blueprint` to the draft release. See the [Wiki release guide](https://github.com/timonmdy/mc-panels/wiki/Releasing).
-
-The release workflow pushes its version commit directly to `main`. If branch protection is enabled, allow GitHub Actions to bypass the rule for this release workflow; keep pull requests and CI required for all other changes.
-
-For repository setup, enable branch protection for `main`, require pull requests and the **CI / build** check, enable private vulnerability reporting, and keep Dependabot updates enabled. The repository includes CI, issue forms, a security policy, and weekly dependency-update PRs.
-
 ## Security and permissions
 
 - Open **Panels → … → Permissions** to manage access for this server. Only the server owner and Pterodactyl root administrators can change permissions.

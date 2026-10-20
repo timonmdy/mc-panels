@@ -1,0 +1,61 @@
+name: Bump PR version
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: pr-version-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted base scripts
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: trusted
+          persist-credentials: false
+      - name: Check out PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          path: source
+      - name: Set version to at least base plus one patch
+        id: version
+        env:
+          BASE_DIR: trusted
+          WORKSPACE_DIR: source
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          version="$(node trusted/.github/scripts/prepare-release.cjs)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          git -C source add package.json package-lock.json conf.yml .github/ISSUE_TEMPLATE/bug_report.yml
+          if ! git -C source diff --cached --quiet; then
+            git -C source config user.name "github-actions[bot]"
+            git -C source config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git -C source commit -m "chore: bump PR version to v$version"
+            git -C source push origin "HEAD:refs/heads/$HEAD_REF"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run CI on the updated PR branch
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/dispatches" -f "ref=$HEAD_REF"

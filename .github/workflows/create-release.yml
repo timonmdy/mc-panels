@@ -1,4 +1,4 @@
-name: Create draft release
+name: Request release
 
 on:
   issue_comment:
@@ -7,64 +7,85 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  actions: write
+  pull-requests: read
 
 concurrency:
-  group: create-release
+  group: pr-version-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    if: github.event.comment.author_association == 'OWNER'
+  request:
+    if: >-
+      github.event.comment.author_association == 'OWNER' &&
+      github.event.issue.pull_request != null &&
+      contains(github.event.comment.body, '/create-release')
     runs-on: ubuntu-latest
     steps:
-      - name: Check out latest main
+      - name: Get pull request details
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > "$RUNNER_TEMP/pr.json"
+          node - "$RUNNER_TEMP/pr.json" <<'NODE'
+          const fs = require('node:fs');
+          const pr = require(process.argv[2]);
+          const output = process.env.GITHUB_OUTPUT;
+          fs.appendFileSync(output, `head_repo=${pr.head.repo.full_name}\n`);
+          fs.appendFileSync(output, `head_ref=${pr.head.ref}\n`);
+          fs.appendFileSync(output, `head_sha=${pr.head.sha}\n`);
+          fs.appendFileSync(output, `base_ref=${pr.base.ref}\n`);
+          NODE
+      - name: Check out trusted main scripts
+        if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         uses: actions/checkout@v4
         with:
           ref: main
-          fetch-depth: 0
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+          path: trusted
+          persist-credentials: false
+      - name: Check out PR branch
+        if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
+        uses: actions/checkout@v4
         with:
-          node-version: 20
-          cache: npm
-      - name: Prepare release version
+          ref: ${{ steps.pr.outputs.head_sha }}
+          path: source
+      - name: Sync version and push release intent
+        if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         id: version
         env:
+          BASE_DIR: trusted
+          WORKSPACE_DIR: source
           RELEASE_COMMENT: ${{ github.event.comment.body }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
-          version="$(node .github/scripts/prepare-release.cjs)"
+          version="$(node trusted/.github/scripts/prepare-release.cjs)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: Check release tag is unused
-        env:
-          TAG: v${{ steps.version.outputs.version }}
-        run: |
-          existing_tag="$(git ls-remote --tags origin "refs/tags/$TAG")"
-          if [ -n "$existing_tag" ]; then
-            echo "Release tag $TAG already exists." >&2
-            exit 1
+          git -C source add package.json package-lock.json conf.yml .github/ISSUE_TEMPLATE/bug_report.yml
+          if ! git -C source diff --cached --quiet; then
+            git -C source config user.name "github-actions[bot]"
+            git -C source config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git -C source commit -m "chore: prepare release v$version"
+            git -C source push origin "HEAD:refs/heads/$HEAD_REF"
           fi
-      - name: Install dependencies
-        run: npm ci
-      - name: Build extension
-        run: npm run build
-      - name: Verify package artifact
-        run: test -s dist/mcpanels.blueprint
-      - name: Commit version bump to main
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json conf.yml
-          git commit -m "chore: release v$VERSION"
-          git push origin main
-      - name: Create draft GitHub release
+      - name: Mark pull request for release
+        if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          gh release create "v$VERSION" dist/mcpanels.blueprint \
-            --draft \
-            --target main \
-            --title "MC Panels v$VERSION" \
-            --generate-notes
+          gh label create release --repo "$GITHUB_REPOSITORY" --description "Create a draft release when this PR merges" --color 0E8A16 --force
+          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label release
+      - name: Run CI on the updated PR branch
+        if: steps.pr.outputs.head_repo == github.repository && steps.pr.outputs.base_ref == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/dispatches" -f "ref=$HEAD_REF"
+      - name: Reject unsupported pull request
+        if: steps.pr.outputs.head_repo != github.repository || steps.pr.outputs.base_ref != 'main'
+        run: |
+          echo "Release requests require a same-repository PR targeting main." >&2
+          exit 1

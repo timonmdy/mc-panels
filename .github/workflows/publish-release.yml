@@ -1,0 +1,96 @@
+name: Publish draft release
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out merged commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Read and verify release version
+        id: version
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const pkg = require('./package.json');
+          const lock = require('./package-lock.json');
+          const conf = fs.readFileSync('conf.yml', 'utf8');
+          const bug = fs.readFileSync('.github/ISSUE_TEMPLATE/bug_report.yml', 'utf8');
+          const version = pkg.version;
+          if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) throw new Error(`Invalid release version: ${version}`);
+          if (lock.version !== version || lock.packages?.['']?.version !== version) throw new Error('package-lock.json version does not match package.json.');
+          if (!new RegExp(`^  version: "${version.replaceAll('.', '\\.')}"$`, 'm').test(conf)) throw new Error('conf.yml version does not match package.json.');
+          if (!new RegExp(`^      placeholder: "${version.replaceAll('.', '\\.')}"$`, 'm').test(bug)) throw new Error('Bug report version placeholder does not match package.json.');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
+          NODE
+      - name: Ensure release tag is unused
+        env:
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          existing_tag="$(git ls-remote --tags origin "refs/tags/$TAG")"
+          if [ -n "$existing_tag" ]; then
+            echo "Release tag $TAG already exists." >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        run: npm ci
+      - name: Build extension
+        run: npm run build
+      - name: Verify package artifact
+        run: test -s dist/mcpanels.blueprint
+      - name: Upload Blueprint package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcpanels-blueprint
+          path: dist/mcpanels.blueprint
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Blueprint package
+        uses: actions/download-artifact@v4
+        with:
+          name: mcpanels-blueprint
+          path: dist
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          TARGET_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          gh release create "v$VERSION" dist/mcpanels.blueprint \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --target "$TARGET_SHA" \
+            --title "DPRO v$VERSION" \
+            --generate-notes
