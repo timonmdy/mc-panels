@@ -18,7 +18,7 @@ export const PanelSettingsDialog = ({ instance, definition, onSave, onClose }: P
         <Modal
             title={`${definition.titleOf ? definition.titleOf(draft) : definition.title} settings`}
             onClose={onClose}
-            width={definition.fields.some((field) => field.kind === 'regex-list') ? 680 : 460}
+            width={[...definition.fields, ...(definition.advancedFields ?? [])].some((field) => field.kind === 'regex-list') ? 680 : 460}
             footer={
                 <>
                     <Button variant='ghost' onClick={onClose}>Cancel</Button>
@@ -26,7 +26,12 @@ export const PanelSettingsDialog = ({ instance, definition, onSave, onClose }: P
                 </>
             }
         >
-            <SettingsForm fields={definition.fields} values={draft} onChange={(key, value) => setDraft((prev) => ({ ...prev, [key]: value }))} />
+            <SettingsForm
+                fields={definition.fields}
+                advancedFields={definition.advancedFields}
+                values={draft}
+                onChange={(key, value) => setDraft((prev) => ({ ...prev, [key]: value }))}
+            />
         </Modal>
     );
 };

@@ -1,5 +1,7 @@
+import React from 'react';
 import { definePanel } from '../registry/panel.types';
 import { ConsoleIssuesPanel } from './ConsoleIssuesPanel';
+import { ConsoleIssuesInfo } from './ConsoleIssuesInfo';
 import { CONSOLE_ISSUE_IGNORE_LIBRARY } from './ignore-patterns';
 
 export const consoleIssuesPanel = definePanel({
@@ -32,5 +34,6 @@ export const consoleIssuesPanel = definePanel({
             library: CONSOLE_ISSUE_IGNORE_LIBRARY,
         },
     ],
+    info: React.createElement(ConsoleIssuesInfo),
     component: ConsoleIssuesPanel,
 });

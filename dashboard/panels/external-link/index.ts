@@ -9,12 +9,15 @@ export const externalLinkPanel = definePanel({
     category: 'Utility',
     multiple: true,
     defaultSize: { w: 1, h: 1 },
-    defaultSettings: { panelTitle: '', linkTitle: '', label: '', url: '', description: '' },
+    defaultSettings: { panelTitle: '', linkTitle: '', label: '', url: '', description: '', confirmationMessage: '' },
     fields: [
         { kind: 'text', key: 'panelTitle', label: 'Panel title', placeholder: 'External link', maxLength: 60 },
         { kind: 'text', key: 'linkTitle', label: 'Link title', placeholder: 'Uses saved label or website name', maxLength: 60 },
         { kind: 'text', key: 'url', label: 'URL', placeholder: 'https://map.example.com/?server={uuid}', help: 'Placeholders: {uuid} {ip} {port}', maxLength: 500 },
         { kind: 'text', key: 'description', label: 'Description', maxLength: 120 },
+    ],
+    advancedFields: [
+        { kind: 'text', key: 'confirmationMessage', label: 'Confirmation message', placeholder: 'This link opens an external website.', help: 'Visitors must confirm before the link opens.', multiline: true, maxLength: 300 },
     ],
     titleOf: (settings) => String(settings.panelTitle || 'External link'),
     component: ExternalLinkPanel,

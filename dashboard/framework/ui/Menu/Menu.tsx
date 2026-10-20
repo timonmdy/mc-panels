@@ -8,7 +8,7 @@ import { Item, Label, Popover, Separator } from './Menu.styles';
 const CloseContext = createContext<() => void>(() => undefined);
 
 export interface TriggerProps {
-    ref: React.RefObject<HTMLButtonElement>;
+    ref: React.RefObject<HTMLButtonElement | null>;
     onClick: () => void;
     active: boolean;
 }

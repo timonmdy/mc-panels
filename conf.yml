@@ -3,7 +3,7 @@ info:
   identifier: "mcpanels"
   description: "Give your Minecraft server a dashboard that feels at home in Pterodactyl. Track live performance, players, uptime and more, then make it your own with flexible panels, profiles and templates."
   flags: ""
-  version: "0.1.2"
+  version: "0.2.0"
   target: "beta-2026-01"
   author: "MC Panels"
   icon: ""

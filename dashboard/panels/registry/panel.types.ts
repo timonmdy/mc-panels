@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { IconName } from '../../framework/ui';
 
 export type PanelSettings = Record<string, any>;
@@ -39,9 +39,11 @@ export interface PanelDefinition<S extends PanelSettings = PanelSettings> {
     maxSize?: PanelSize;
     defaultSettings: S;
     fields: SettingField[];
+    advancedFields?: SettingField[];
     component: ComponentType<PanelProps<S>>;
     titleOf?: (settings: S) => string;
     bare?: boolean;
+    info?: ReactNode;
 }
 
 export type AnyPanelDefinition = PanelDefinition<PanelSettings>;
