@@ -12,6 +12,13 @@ final class DebugLog
             return;
         }
 
-        Log::debug('MC Panels: ' . $event, $context);
+        $message = 'MC Panels: ' . $event;
+        if (PHP_SAPI === 'cli') {
+            fwrite(STDERR, $message . ' ' . json_encode($context, JSON_PARTIAL_OUTPUT_ON_ERROR) . PHP_EOL);
+
+            return;
+        }
+
+        Log::debug($message, $context);
     }
 }

@@ -23,6 +23,23 @@ A live Minecraft server dashboard for Pterodactyl.
 
 Run the same command to update an existing installation.
 
+## Documentation
+
+See the [MC Panels Wiki](https://github.com/timonmdy/mc-panels/wiki) for:
+
+- [Troubleshooting Laravel 500s and the cron fix](https://github.com/timonmdy/mc-panels/wiki/Troubleshooting-Laravel-500s)
+- [Security and permissions](https://github.com/timonmdy/mc-panels/wiki/Security)
+- [Coding guidelines](https://github.com/timonmdy/mc-panels/wiki/Coding-Guidelines)
+- [Adding panels](https://github.com/timonmdy/mc-panels/wiki/Adding-Panels)
+
+## Releases
+
+Repository owners can comment on an issue with `/create-release` to create a draft release with the next patch version. To choose a version, provide it explicitly, for example `/create-release 1.2.0`. The workflow updates `package.json`, `package-lock.json`, and `conf.yml`, builds the extension, commits the version bump to `main`, and attaches only `mcpanels.blueprint` to the draft release. See the [Wiki release guide](https://github.com/timonmdy/mc-panels/wiki/Releasing).
+
+The release workflow pushes its version commit directly to `main`. If branch protection is enabled, allow GitHub Actions to bypass the rule for this release workflow; keep pull requests and CI required for all other changes.
+
+For repository setup, enable branch protection for `main`, require pull requests and the **CI / build** check, enable private vulnerability reporting, and keep Dependabot updates enabled. The repository includes CI, issue forms, a security policy, and weekly dependency-update PRs.
+
 ## Security and permissions
 
 - Open **Panels → … → Permissions** to manage access for this server. Only the server owner and Pterodactyl root administrators can change permissions.
@@ -70,6 +87,7 @@ Run the same command to update an existing installation.
 - For command-based TPS collection, select the matching output format in **TPS and world data**: Fabric `tick query`, Forge `forge tps`, or `spark tps`. Spark output includes five TPS windows; MC Panels records the first (5-second) value. Custom output can use a PHP regex with named `tps` and optional `mspt` captures.
 - IP history is collected from `logs/latest.log` when **Keep player IP history** is greater than `0`. Owners, root administrators, and keys with `ips.view` can see addresses.
 - Dashboard animations and detailed debug logging are in the extension’s **General** settings. Dragging previews panels smoothly moving into place when animations are enabled.
+- Scheduled collector debug messages are written to the scheduler’s stderr rather than Laravel’s shared daily log, so a CLI scheduler run does not create a log file that the web process cannot write to. Web-request diagnostics still use Laravel logging.
 - Data Explorer is limited to the current server; edits and deletions require confirmation.
 
 ## Development
@@ -80,6 +98,8 @@ npm run build
 ```
 
 The build type-checks the dashboard and creates `dist/mcpanels.blueprint`.
+
+Pull requests run the same typecheck and packaging build. See the [Wiki](https://github.com/timonmdy/mc-panels/wiki) for [coding guidelines](https://github.com/timonmdy/mc-panels/wiki/Coding-Guidelines) and [panel development](https://github.com/timonmdy/mc-panels/wiki/Adding-Panels).
 
 ### Adding a TPS command reader
 

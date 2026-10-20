@@ -11,7 +11,7 @@ final class SettingsSchema
         return [
             'General' => [
                 'animationsEnabled' => ['type' => 'bool', 'default' => true, 'label' => 'Enable dashboard animations'],
-                'debugLogging' => ['type' => 'bool', 'default' => false, 'label' => 'Enable detailed debug logging', 'help' => 'Browser request diagnostics appear in DevTools Console (filter for "MC Panels"). Server collector diagnostics are written to the panel Laravel log. Disable after troubleshooting.'],
+                'debugLogging' => ['type' => 'bool', 'default' => false, 'label' => 'Enable detailed debug logging', 'help' => 'Browser request diagnostics appear in DevTools Console (filter for "MC Panels"). Scheduled collector diagnostics go to scheduler stderr; web request diagnostics go to the panel Laravel log. Disable after troubleshooting.'],
             ],
             'Data collection' => [
                 'collectMode' => ['type' => 'select', 'default' => 'visited', 'options' => ['visited' => 'Only servers that opened the MC Panels tab', 'all' => 'Every server'], 'label' => 'Servers to collect', 'help' => 'Collecting every server also polls non-Minecraft servers.'],

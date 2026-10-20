@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible problem with MC Panels.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: input
+    id: version
+    attributes:
+      label: MC Panels version
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Pterodactyl and Blueprint versions
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the steps to reproduce and expected behavior. Redact credentials, IPs, and personal data.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant error or logs
+      description: Include the first relevant exception and stack trace, with secrets and personal data removed.
+    validations:
+      required: false
