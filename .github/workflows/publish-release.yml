@@ -24,12 +24,12 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Check out merged commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -65,7 +65,7 @@ jobs:
       - name: Verify package artifact
         run: test -s dist/mcpanels.blueprint
       - name: Upload Blueprint package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mcpanels-blueprint
           path: dist/mcpanels.blueprint
@@ -78,7 +78,7 @@ jobs:
       contents: write
     steps:
       - name: Download Blueprint package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: mcpanels-blueprint
           path: dist
