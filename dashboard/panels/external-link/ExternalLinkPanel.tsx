@@ -1,13 +1,12 @@
-import React, { MouseEvent, useState } from 'react';
-import { FaExternalLinkAlt } from 'react-icons/fa';
-import styled from 'styled-components';
+import React, { useState } from 'react';
+import styled, { css } from 'styled-components';
 import { color } from '../../framework/theme';
-import { EmptyState, Icon, useConfirmation } from '../../framework/ui';
+import { Button, EmptyState, Icon, Modal } from '../../framework/ui';
 import { useDashboard } from '../../data/useDashboard';
 import { fillTemplate, safeHttpUrl } from '../../utils/template.util';
 import type { PanelProps } from '../registry/panel.types';
 
-const Anchor = styled.a<{ $compact: boolean }>`
+const linkStyles = css<{ $compact: boolean }>`
     display: flex;
     align-items: center;
     gap: 10px;
@@ -51,6 +50,20 @@ const Anchor = styled.a<{ $compact: boolean }>`
     }
 `;
 
+const Anchor = styled.a<{ $compact: boolean }>`
+    ${linkStyles}
+`;
+
+const ConfirmButton = styled.button<{ $compact: boolean }>`
+    ${linkStyles}
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+`;
+
 const Favicon = styled.img<{ $compact: boolean }>`
     width: ${(p) => (p.$compact ? '16px' : '20px')};
     height: ${(p) => (p.$compact ? '16px' : '20px')};
@@ -65,49 +78,62 @@ export const ExternalLinkPanel = ({ settings, size }: PanelProps) => {
         ? `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(new URL(url).origin)}&sz=64`
         : '';
     const [failedFaviconUrl, setFailedFaviconUrl] = useState('');
-    const confirm = useConfirmation();
     const confirmationMessage = String(settings.confirmationMessage ?? '').trim();
     const compact = size.h <= 1;
+    const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
-    const handleClick = async (event: MouseEvent<HTMLAnchorElement>) => {
-        if (!confirmationMessage || !url) return;
-        event.preventDefault();
-
-        const openedWindow = window.open('about:blank', '_blank');
+    const openLink = () => {
+        if (!url) return;
+        const openedWindow = window.open(url, '_blank');
         if (openedWindow) openedWindow.opener = null;
-
-        const accepted = await confirm({
-            title: 'Open external link?',
-            message: confirmationMessage,
-            confirmLabel: 'Open link',
-            destructive: false,
-        });
-
-        if (accepted) {
-            if (openedWindow) {
-                openedWindow.location.href = url;
-            } else {
-                window.location.assign(url);
-            }
-        } else if (openedWindow) {
-            openedWindow.close();
-        }
+        setIsConfirmationOpen(false);
     };
 
     if (!url) return <EmptyState icon='link' title='No link yet' hint='Open panel settings and enter an http(s) URL. Placeholders: {uuid} {ip} {port}.' />;
 
     return (
-        <Anchor href={url} target='_blank' rel='noopener noreferrer' $compact={compact} onClick={handleClick}>
-            {failedFaviconUrl === faviconUrl ? (
-                <FaExternalLinkAlt aria-hidden='true' />
+        <>
+            {confirmationMessage ? (
+                <ConfirmButton type='button' $compact={compact} onClick={() => setIsConfirmationOpen(true)}>
+                    {failedFaviconUrl === faviconUrl ? (
+                        <Icon name='world' />
+                    ) : (
+                        <Favicon key={faviconUrl} $compact={compact} src={faviconUrl} alt='' aria-hidden='true' onError={() => setFailedFaviconUrl(faviconUrl)} />
+                    )}
+                    <span>
+                        <strong>{String(settings.linkTitle || settings.label || new URL(url).hostname)}</strong>
+                        <small>{String(settings.description || url)}</small>
+                    </span>
+                    <Icon name='link' />
+                </ConfirmButton>
             ) : (
-                <Favicon key={faviconUrl} $compact={compact} src={faviconUrl} alt='' aria-hidden='true' onError={() => setFailedFaviconUrl(faviconUrl)} />
+                <Anchor href={url} target='_blank' rel='noopener noreferrer' $compact={compact}>
+                    {failedFaviconUrl === faviconUrl ? (
+                        <Icon name='world' />
+                    ) : (
+                        <Favicon key={faviconUrl} $compact={compact} src={faviconUrl} alt='' aria-hidden='true' onError={() => setFailedFaviconUrl(faviconUrl)} />
+                    )}
+                    <span>
+                        <strong>{String(settings.linkTitle || settings.label || new URL(url).hostname)}</strong>
+                        <small>{String(settings.description || url)}</small>
+                    </span>
+                    <Icon name='link' />
+                </Anchor>
             )}
-            <span>
-                <strong>{String(settings.linkTitle || settings.label || new URL(url).hostname)}</strong>
-                <small>{String(settings.description || url)}</small>
-            </span>
-            <Icon name='link' />
-        </Anchor>
+            {confirmationMessage && isConfirmationOpen && (
+                <Modal
+                    title='Open external link?'
+                    onClose={() => setIsConfirmationOpen(false)}
+                    footer={
+                        <>
+                            <Button variant='ghost' onClick={() => setIsConfirmationOpen(false)}>Cancel</Button>
+                            <Button variant='primary' onClick={openLink}>Open link</Button>
+                        </>
+                    }
+                >
+                    <p>{confirmationMessage}</p>
+                </Modal>
+            )}
+        </>
     );
 };
