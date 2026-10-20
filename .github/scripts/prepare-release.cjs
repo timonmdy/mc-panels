@@ -35,6 +35,7 @@ const baseVersion = parseVersion(basePackage.version, 'Base package.json version
 const currentVersion = parseVersion(packageJson.version, 'PR package.json version');
 const nextPatch = [...baseVersion];
 nextPatch[2] += 1n;
+const nextMinor = [baseVersion[0], baseVersion[1] + 1n, 0n];
 
 const comment = process.env.RELEASE_COMMENT;
 const isRelease = typeof comment === 'string';
@@ -46,14 +47,17 @@ if (isRelease) {
     }
     if (match[1]) {
         requestedVersion = match.slice(1).map(BigInt);
-        if (compareVersions(requestedVersion, baseVersion) <= 0) {
-            throw new Error(`Release version ${formatVersion(requestedVersion)} must be greater than base version ${basePackage.version}.`);
+        if (compareVersions(requestedVersion, nextMinor) < 0) {
+            throw new Error(`Release version ${formatVersion(requestedVersion)} must be at least the next minor version ${formatVersion(nextMinor)}.`);
         }
     }
 }
 
 let targetVersion = compareVersions(currentVersion, nextPatch) >= 0 ? currentVersion : nextPatch;
-if (requestedVersion) {
+if (isRelease && compareVersions(targetVersion, nextMinor) < 0) {
+    targetVersion = nextMinor;
+}
+if (requestedVersion && isRelease) {
     if (compareVersions(requestedVersion, targetVersion) < 0) {
         throw new Error(`Release version ${formatVersion(requestedVersion)} cannot be lower than the PR version ${formatVersion(targetVersion)}.`);
     }
