@@ -7,7 +7,7 @@ import { RegisteredPlayersPanel } from './RegisteredPlayersPanel';
 export const registeredPlayersPanel = definePanel({
     type: 'registered-players-list',
     title: 'Registered players',
-    description: 'Everyone who has joined, with ban status and IP history.',
+    description: 'Everyone who has joined, with ban status and IP history (if allowed).',
     icon: 'registered',
     category: 'Players',
     multiple: false,

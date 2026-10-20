@@ -5,27 +5,31 @@ on:
     types:
       - created
 
+
+concurrency:
+  group: pr-version-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   issues: write
   actions: write
   pull-requests: read
 
-concurrency:
-  group: pr-version-${{ github.event.issue.number }}
-  cancel-in-progress: false
-
 jobs:
-  auto_labeler:
+  request:
     if: >-
       github.event.comment.author_association == 'OWNER' &&
       github.event.issue.pull_request != null &&
       contains(github.event.comment.body, '/create-release')
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      contents: write
       pull-requests: write
-      
+      repository-projects: write
+      actions: write
+      checks: write
+
     steps:
       - name: Get pull request details
         id: pr
@@ -84,6 +88,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
+          gh label create release --repo "$GITHUB_REPOSITORY" --description "Create a draft release when this PR merges" --color 0E8A16 --force
           gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" -f "labels[]=release"
 
       - name: Run CI on the updated PR branch
