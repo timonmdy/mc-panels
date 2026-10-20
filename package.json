@@ -1,7 +1,7 @@
 {
   "name": "mcpanels",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "MC Panels - Pterodactyl Blueprint extension",
   "scripts": {
     "typecheck": "tsc --noEmit",
