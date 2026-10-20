@@ -20,7 +20,7 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-
+      
     steps:
       - name: Get pull request details
         id: pr

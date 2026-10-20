@@ -43,7 +43,7 @@ let requestedVersion = null;
 if (isRelease) {
     const match = comment.match(/^\/create-release(?:[ \t]+(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))?[ \t]*$/);
     if (!match) {
-        throw new Error('Use exactly `/create-release` or `/create-release MAJOR.MINOR.PATCH`.');
+        throw new Error('Use exactly `/create-release` or `/create-release MAJOR.MINOR.PATCH`. You used: ' + comment + " which differs from the expected format here: " + comment.replace(/^(\/create-release)(?:[ \t]+(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))?[ \t]*$/, "$1 MAJOR.MINOR.PATCH"));
     }
     if (match[1]) {
         requestedVersion = match.slice(1).map(BigInt);
